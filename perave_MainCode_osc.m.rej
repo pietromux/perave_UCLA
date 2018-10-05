@@ -1,0 +1,12 @@
+diff a/perave_MainCode_osc.m b/perave_MainCode_osc.m	(rejected hunks)
+@@ -60,8 +60,8 @@
+ 
+ 
+ %% Run the main integration routine
+-cavitydetuning = -30;    % In units of zsep
+-transmission = 0.66;      % Power transmission through one cavity pass 
++% cavitydetuning = -30;    % In units of zsep
++% transmission = 0.66;      % Power transmission through one cavity pass 
+                                       % losses = 1 - transmission                                      
+ sigma_omega = 0.003*param.nslices*param.zsep;     % Filter fractional bandwidth. 
+ 
