@@ -58,8 +58,8 @@ calculate_3Dcorrection;
 
 
 %% Run the main integration routine
-cavitydetuning = -30;    % In units of zsep
-transmission = 0.2;      % Power transmission through one cavity pass 
+% cavitydetuning = -30;    % In units of zsep
+% transmission = 0.66;      % Power transmission through one cavity pass 
                                       % losses = 1 - transmission                                      
 sigma_omega = 0.003*param.nslices*param.zsep;     % Filter fractional bandwidth. 
 
@@ -82,7 +82,7 @@ tapering_strength = 2;   % 0 max of slices at time 0
 % 
 rad_vs_beam=zeros(param.nslices,100);
 
-for npasses = 1:30
+for npasses = 1:100
 %     clear power radfield thetap gammap bunch 
 clear power radfield bunch
     t0 = tic;
@@ -133,21 +133,13 @@ compute_undulator_field_v5h
     rad_vs_beam(:,npasses) = power(end,:);
     Eff(npasses) = Efficiency;
     PL(npasses) = pulselength;
-    oldfield=zeros(1,param.nslices);  
+    oldfield=zeros(1,param.nslices);
     
-    
-    if param.itdp==1
-    if  cavitydetuning>0
+    if cavitydetuning>0
     oldfield(1,cavitydetuning+1:cavitydetuning+size(radfield,2)) = radfield(end,:)*sqrt(transmission);
     else
     oldfield(1,1:1+cavitydetuning+size(radfield,2)) = radfield(end,-cavitydetuning:end)*sqrt(transmission);    
     end
-    else
-        oldfield=radfield(end,:)*sqrt(transmission);
-    end
-
-    
-    
     pause(0.5)
     
     
@@ -177,7 +169,33 @@ compute_undulator_field_v5h
     legend('power','filterfield','oldfield','profile_b')
     oldfield = filterfield;
     firstpass = 0;                                  % Start recirculation
+        saveas(gcf,[figdir,'field_',num2str(npasses),'.png'])
+        figure(2)
+                saveas(gcf,[figdir,'outfig_',num2str(npasses),'.png'])
+
+        figure(3)
+                        saveas(gcf,[figdir,'contour_',num2str(npasses),'.png'])
+
+        figure(4)
+                                saveas(gcf,[figdir,'spec_',num2str(npasses),'.png'])
                                 
+%                                 if npasses>1 & abs((mean(rad_vs_beam(:,npasses))-mean(rad_vs_beam(:,npasses-1)))/mean(rad_vs_beam(:,npasses)))<.01
+%                                     updatetapering=1;
+%                                 else
+%                                     updatetapering=-1;
+%                                 end
+%                                 
+%                                 if Eff>0.25
+%                                     updatetapering=-1;
+%                                 end
+
+if npasses>1 & npasses<50
+    updatetapering=-1;
+elseif npasses==50
+    updatetapering=1;
+else 
+    updatetapering=-1;
+end
     
 %                                     
 Kz_save(:,npasses)=Kz;
@@ -186,6 +204,7 @@ end
 figure(100)
 plot(max(rad_vs_und),'b')
 title('max rad vs und')
+        saveas(gcf,[figdir,'final_radvsund.png'])
 
 figure(101)
 plot([1:1:param.Nsnap]*param.stepsize,rad_vs_und(:,end),'r')
@@ -193,21 +212,25 @@ hold on
 plot([1:1:param.Nsnap]*param.stepsize, meanenergy*charge*511000)
 xlim([0,param.Nsnap*param.stepsize])
 title('Radiation energy along undulator')
+        saveas(gcf,[figdir,'final_radenergy.png'])
 hold off
 figure(102)
 plot(PL)
 title('pulselength')
+        saveas(gcf,[figdir,'final_pulselength.png'])
 
 figure(103)
 plot(Eff)
 title('Eff')
+        saveas(gcf,[figdir,'final_eff.png'])
 
-% figure(300)
-% contourf([1:size(rad_vs_beam,1)]*param.zsep*param.lambda0/c,[1:100],rad_vs_beam')
-% title('rad vs beam')
-% 
-% colorscheme=cool(size(rad_vs_und,2));
-% hold on
+figure(300)
+contourf([1:size(rad_vs_beam,1)]*param.zsep*param.lambda0/c,[1:100],rad_vs_beam')
+title('rad vs beam')
+        saveas(gcf,[figdir,'final_beam.png'])
+
+colorscheme=cool(size(rad_vs_und,2));
+hold on
 
 figure(104)
 plot(blist)

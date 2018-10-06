@@ -14,22 +14,21 @@ param.psir = pi/6;
 
 %% Simulation control options
 param.phasespacemovie=0;
-param.itdp = 0;
-param.prebunching = 2;   %0 = no prebuncher 1 = numeric prebunch 2 = prebunched by R56                                                                % set to 1 to start from a pre-bunched beam. 
+param.itdp = 1;
+param.prebunching = ;                                                                  % set to 1 to start from a pre-bunched beam. 
 param.changeresphase = 0;
 saveoutput=0;
 % Set simulation length and # of snapshots
 param.delz=1;
 param.und_periods = round(lwig/param.lambdau);                         % number of undulator periods to simulate
 param.Nsnap = round(lwig/param.lambdau/param.delz);                % number of snapshots to take over the length of the undulator
-param.zsep = 4;                                                              
+param.zsep = 5;                                                              
 Nslip=round(param.Nsnap/param.zsep);
 param.shotnoise = 1;
 param.lambda0 = 266e-9;                                    % seed wavelength (m)
 param.k = 2*pi/param.lambda0;                                     % wavenumber in free space
-if param.prebunching~=2
 param.nslices =4*Nslip+4*round(param.sigma_t/param.zsep/param.lambda0*c);
-end
+
 if(~param.itdp)
     param.nslices = 1;
 end
@@ -49,7 +48,7 @@ param.bunch = 0.7;                                                   % Initial b
 param.bunchphase = -param.psir-pi/2;                     % Initial bunching phase
 param.buncherAmp = 5;
 
-betax=3;
+betax=4;
 emitx=2e-6;
 charge = 300e-12;
 %param.sigma_t = 40e-15;

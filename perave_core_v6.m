@@ -13,29 +13,40 @@ tslice = (1:param.nslices)*param.lambda0*param.zsep/c;
 if (param.beamdistribution == 1)
     profile_b = exp(-(tslice-tslice(end)/2).^2/2/param.sigma_t^2);
 else
+    profile_b=[];
     profile_b(1:param.nslices) = 0;
     profile_b(abs(tslice-tslice(end)/2)<param.sigma_t) = 1;
 end
 
 if (param.laserdistribution == 1)
+    profile_l=[];
     profile_l = exp(-(tslice-param.slippage).^2/2/param.sigma_l^2);
 else
+    profile_l=[];
     profile_l(1:param.nslices) = 0;
     profile_l(abs(tslice-param.slippage)<param.sigma_l) = 1;
 end
     
 %profile_b = heaviside(tslice-tslice(end)/2+param.sigma_t).*(1-heaviside(tslice-tslice(end)/2-param.sigma_t));
-
-radfield=ones(param.Nsnap,param.nslices)*param.E0;
+% if param.itdp==1
+radfield=ones(param.Nsnap,length(tslice))*param.E0;
+% end
 radfield(1,:) = profile_l*param.E0;
-
+% 
 if ~firstpass
+    radfield=[];
     radfield(1,:) = oldfield;
 end
 
+if firstpass & param.prebunching==2
+        radfield=[];
+        radfield(1,:) = oldfield;
+end
+    
 thetap = zeros(param.Nsnap,param.nslices,Np);
 gammap=zeros(param.Nsnap,param.nslices,Np);
 
+bunching=[];
 for islice = 1:param.nslices
 X0 = hammersley(2,Np);
 gammap(1,islice,:) = gamma0+param.deltagamma*X0(1,:);
@@ -66,6 +77,13 @@ if (param.prebunching < 0)
         thetap(1,islice,ipart) = thetab(ipart) + param.bunchphase;
         gammap(1,islice,ipart) = gammab(ipart);
         end
+end
+
+if param.prebunching==2 
+    thetap=[];
+    gammap=[];
+    thetap(1,:,:)=thetap_new;
+    gammap(1,:,:)=gammapend;
 end
 
 bunching(islice) = (sum(exp(1i.*thetap(1,islice,:))/Np));
@@ -125,7 +143,7 @@ for ij = 1:param.Nsnap-1  % takes Nsnap snapshots along length of undulator
             bunch(ij,:)=(mean(exp(1j.*thetap(ij,:,:)),3));
             
             % Compute undulator field at next step (constant res phase)
-            if (firstpass)
+            if param.tapering~=0 & (firstpass )
                  switch tapering_strength
                      case 0 
                          Klz = max(abs(radfield(1,:)));
@@ -137,8 +155,16 @@ for ij = 1:param.Nsnap-1  % takes Nsnap snapshots along length of undulator
 %         Klz = sum(abs(radfield(ij,:)).*profile_b(:)')/sum(profile_b)/8
             
             Kz(ij+1)=Kz(ij)-param.stepsize/const_resp*Klz.*sin(res_phase(ij));
+%             elseif updatetapering==-1
+           
+%                 Kz=Kz_save(:,npasses-1);
+            else
+                Kz(ij+1)=Kz(ij);
             end
             
+            if loadtapering==1
+                Kz=Kz_load;
+            end
             gammares(ij+1) = sqrt (param.lambdau.*(1+Kz(ij).^2) / 2/param.lambda0);            
             telapsed = toc(tstart);
             total_simtime = total_simtime+telapsed;
@@ -184,13 +210,15 @@ else
 end
 
 %% Remove slices within one total slippage length
-if(param.itdp)
-radfield(:,1:Nslip)=[];
-gammap(:,1:Nslip,:)=[];
-thetap(:,1:Nslip,:)=[];
-profile_l(1:Nslip)=[];
-profile_b(1:Nslip)=[];
-bunch(:,1:Nslip)=[];
-end
-% Calculate radiation power 
+% if(param.itdp)
+% radfield(:,1:Nslip)=[];
+% gammap(:,1:Nslip,:)=[];
+% thetap(:,1:Nslip,:)=[];
+% profile_l(1:Nslip)=[];
+% profile_b(1:Nslip)=[];
+% bunch(:,1:Nslip)=[];
+% end
+% Calculate radiation power     
+power=[];
 power(:,:) = abs(radfield(:,:)).^2/377*param.A_e;
+param.nslices=size(thetap,2);
