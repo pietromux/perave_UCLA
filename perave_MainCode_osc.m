@@ -17,7 +17,7 @@ Z0 = 376.73;                                                     % Impedance of 
 
 %% Load the User Determined initial conditions
 clear power radfield thetap gammap bunch
-param.sigma_t = 0.9e-12;
+param.sigma_t = 90e-6/3e8;
 param.use3Dcorrection  = 1;
 param.beamdistribution = 2;       % Using GENESIS flag: 2-uniform 1-gaussian
 param.laserdistribution = 1;         % Using GENESIS flag: 2-uniform 1-gaussian
@@ -46,7 +46,7 @@ calculate_3Dcorrection;
 
 %% Run the main integration routine
 cavitydetuning = -16;    % In units of zsep
-transmission = 0.66;      % Power transmission through one cavity pass 
+transmission = 0.7;      % Power transmission through one cavity pass 
                                       % losses = 1 - transmission                                      
 sigma_omega = 0.003*param.nslices*param.zsep;     % Filter fractional bandwidth. 
 firstpass =1;
@@ -82,10 +82,19 @@ tapering_strength = 2;   % 0 max of slices at time 0
     plot(angle(filter3),'k')
     hold off
  %% Oscillator loop
-for npasses = 1:100
+for npasses = 1:10
+    
     clear power radfield thetap gammap bunch
     t0 = tic;
+    Perave_User_Input_osc_pb;
     perave_core_v6;
+    perave_R56;
+    
+    clear power radfield thetap gammap bunch
+    Perave_User_Input_osc;
+    compute_undulator_field_v5h;
+    perave_core_v6;
+    
     disp(['Simulation time = ',num2str(toc(t0)./60),' min'])
     perave_postprocessor_v6   
     rad_vs_und(:,npasses) = sum(power,2)*param.lambda0*param.zsep/c;
@@ -94,13 +103,17 @@ for npasses = 1:100
     PL(npasses) = pulselength;
     oldfield(1:param.nslices) =0;
     
+    if param.itdp==1
     if cavitydetuning>0
     oldfield(1,cavitydetuning+1:cavitydetuning+size(radfield,2)) = radfield(end,:)*sqrt(transmission);
     else
     oldfield(1,1:1+cavitydetuning+size(radfield,2)) = radfield(end,-cavitydetuning:end)*sqrt(transmission);    
     end
     pause(0.5)
-
+    else
+        oldfield=radfield(end)*sqrt(transmission);
+    end
+    
     %%
     figure(8)
     subplot(1,2,1)
@@ -116,6 +129,8 @@ for npasses = 1:100
     hold off
     pause(0.5)
     oldfield = filterfield;
+    
+    
     firstpass = 0;                                  % Start recirculation
 end
 %% Post-process stuff
@@ -132,7 +147,12 @@ plot(PL)
 title 'pulselength'
 figure(103)
 plot(Eff)
-
+title('Eff')
+if param.itdp==1
 figure(300)
 contourf([1:size(rad_vs_beam,1)]*param.zsep*param.lambda0/c,[1:100],rad_vs_beam')
-
+end
+figure(104)
+plot(blist)
+hold off
+title('bunch factor in each run')
