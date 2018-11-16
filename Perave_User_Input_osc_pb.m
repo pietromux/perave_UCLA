@@ -2,7 +2,7 @@
 %%%%User entered parameters%%%%%
 %% from Duris et al. TESSO paper 
 %% Prebuncher Parameters
-param.R56buncher=14e-6;
+param.R56buncher=11e-6;
 param.phaseshift=1.8;
 %% Undulator parameters
 param.lambdau = 3.2e-2;                                 % undulator period (m)
@@ -16,7 +16,7 @@ param.psir = pi/6;
 
 %% Simulation control options
 param.phasespacemovie=0;
-param.itdp = 0;
+param.itdp = 1;
 param.prebunching = 0;                                                                  % set to 1 to start from a pre-bunched beam. 
 
 param.changeresphase = 0;
@@ -30,7 +30,7 @@ Nslip=round(param.Nsnap/param.zsep);
 param.shotnoise = 1;
 param.lambda0 = 266e-9;                                    % seed wavelength (m)
 param.k = 2*pi/param.lambda0;                                     % wavenumber in free space
-param.nslices =400+4*Nslip+4*round(param.sigma_t/param.zsep/param.lambda0*c);
+param.nslices =100+4*Nslip+4*round(param.sigma_t/param.zsep/param.lambda0*c);
 
 if(~param.itdp)
     param.nslices = 1;
@@ -42,7 +42,7 @@ param.stepsize = param.lambdau*param.delz;
 
 %% Electron beam parameters
 gamma0 = sqrt(param.k/2/param.ku*(1+param.K^2));param.gamma0=gamma0;          % relativistic gamma factor
-param.Np = 512;                                          % # of macroparticles (500-1000 well) 
+param.Np = 256;                                          % # of macroparticles (500-1000 well) 
 param.Ee = gamma0*me*c^2/e0;                  % Total e-beam energy (eV)
 energyspread = 1*20e-15/param.sigma_t;                                       % Absolute energy spread MeV
 param.deltagammarel = energyspread/gamma0/0.511;          % Relative energy spread dgamma/gamma

@@ -23,9 +23,9 @@ param.beamdistribution = 2;       % Using GENESIS flag: 2-uniform 1-gaussian
 param.laserdistribution = 1;         % Using GENESIS flag: 2-uniform 1-gaussian
 recirculate = 0;
 t1 = tic;
-Perave_User_Input_osc;
 
 %% Compute the undulator field
+Perave_User_Input_osc_pb;
 compute_undulator_field_v5h
 
 %% Calculate 1-D FEL parameters
@@ -33,7 +33,7 @@ rho1D = 1/param.gamma0*(1/8*param.I/IA*param.K.^2/param.sigmax^2/param.ku^2)^(1/
 Lgain = param.lambdau/(4*sqrt(3)*pi*rho1D);
 Lsat =   param.lambdau/rho1D;
 Psat = 1.6*rho1D*param.Ee*param.I;
-if param.tapering
+
     [psi1, psi2, bucket_height, capture_fraction, bucket_area, bunching_factor] = bucket_parameters(param.psir);
     a1 = 2*param.lambda0/param.lambdau*e0*param.E0/me/c^2*sin(param.psir);
     a2 = ((2*param.lambda0/param.lambdau)^1.5)*Z0*e0*param.I*sin(param.psir)^2*capture_fraction*bunching_factor/2/param.A_e/me/c^2;
@@ -41,19 +41,20 @@ if param.tapering
     etamax = param.K*(a1*lwig+a2*lwig^2/2)/(1+param.K^2)*capture_fraction
     bunchlength_rms = param.sigma_t;
     peakcurrent = param.I;
-end
-calculate_3Dcorrection; 
+
+    calculate_3Dcorrection; 
 
 %% Run the main integration routine
-cavitydetuning = -16;    % In units of zsep
-transmission = 0.7;      % Power transmission through one cavity pass 
+cavitydetuning = -35;    % In units of zsep
+transmission = 0.1;      % Power transmission through one cavity pass 
                                       % losses = 1 - transmission                                      
-sigma_omega = 0.003*param.nslices*param.zsep;     % Filter fractional bandwidth. 
+sigma_omega = 0.005*param.nslices*param.zsep;     % Filter fractional bandwidth. 
 firstpass =1;
 tapering_strength = 2;   % 0 max of slices at time 0 
                                       % 1 max of slices
                                       % 2 avg of slices
 %% Filter definition (Filter2 is a complex transfer function. Cavity detuning needs to be adjusted to 12)
+   if param.itdp
     jfreq = 1:param.nslices;
     filter = exp(-(jfreq-param.nslices/2).^2/2/sigma_omega^2);
     for jfreq = 1:param.nslices;
@@ -81,17 +82,28 @@ tapering_strength = 2;   % 0 max of slices at time 0
     hold on
     plot(angle(filter3),'k')
     hold off
+   else 
+       filter3=1;
+   end
  %% Oscillator loop
-for npasses = 1:10
+for npasses = 1:20
     
     clear power radfield thetap gammap bunch
     t0 = tic;
     Perave_User_Input_osc_pb;
+    compute_undulator_field_v5h
     perave_core_v6;
     perave_R56;
     
     clear power radfield thetap gammap bunch
-    Perave_User_Input_osc;
+    param.tapering = 1;
+    lwig = 4;
+    param.und_periods = round(lwig/param.lambdau); 
+    param.prebunching = 2;
+    if(param.itdp)
+    param.Nsnap = floor(param.und_periods/param.delz);        % Note that the result must be an integer
+    end 
+    
     compute_undulator_field_v5h;
     perave_core_v6;
     
@@ -109,7 +121,7 @@ for npasses = 1:10
     else
     oldfield(1,1:1+cavitydetuning+size(radfield,2)) = radfield(end,-cavitydetuning:end)*sqrt(transmission);    
     end
-    pause(0.5)
+    pause(0.2)
     else
         oldfield=radfield(end)*sqrt(transmission);
     end
@@ -150,9 +162,9 @@ plot(Eff)
 title('Eff')
 if param.itdp==1
 figure(300)
-contourf([1:size(rad_vs_beam,1)]*param.zsep*param.lambda0/c,[1:100],rad_vs_beam')
+contourf([1:size(rad_vs_beam,1)]*param.zsep*param.lambda0/c,[1:npasses],rad_vs_beam')
 end
 figure(104)
 plot(blist)
 hold off
-title('bunch factor in each run')
+title('bunch factor after prebucher vs. pass')

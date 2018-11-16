@@ -1,15 +1,6 @@
 thetap_R56=[];
 drift_buncher=28*.032;
-%%change R56?
-% if getnewR56==1
-%                              Klz = mean(abs(radfield(end,1:param.nslices)),2);
-%                              Klz_mod=Klz*pi*param.lambda0/2*param.chi2;
-%                              Klz_mod=Klz/2/pi*param.lambda0*param.chi2;
-%     param.R56buncher=(1/pi)*param.gamma0^2*param.lambda0^2/(2*pi)/(param.K*(lwig)*Klz_mod)+drift_buncher/(2*param.gamma0^2);
-% R56buncher=0;
-% else
-%     R56buncher=param.R56buncher;
-% end
+
 
 for islice = 1:size(gammap,2)
     gamma_avg=mean(gammap(end,islice,:));
@@ -24,13 +15,15 @@ end
 
 gammapend=gammap(end,:,:);
 thetapend=thetap(end,:,:);
-gammapend=reshape(gammapend,[size(gammap,2),param.Np]);
-thetapend=reshape(thetapend,[size(gammap,2),param.Np]);
-thetap_R56=reshape(thetap_R56,[size(gammap,2),param.Np]);
-figure(88)
-plot(thetapend(round(islice/2),:),gammapend(round(islice/2),:))
-hold on
-plot(thetap_R56(round(islice/2),:),gammapend(round(islice/2),:))
+
+% gammapend=reshape(gammapend,[size(gammap,2),param.Np]);
+% thetapend=reshape(thetapend,[size(gammap,2),param.Np]);
+% thetap_R56=reshape(thetap_R56,[size(gammap,2),param.Np]);
+% figure(88)
+% plot(thetapend(round(islice/2),:),gammapend(round(islice/2),:))
+% hold on
+% plot(thetap_R56(round(islice/2),:
+
 thetap(end,:,:)=thetap_R56;
 oldbfactor=mean(abs(bcomplex_old));
 newbfactor=mean(abs(bcomplex_new));
@@ -45,7 +38,7 @@ hold off
 %%%slippage due to prebuncher
 if param.itdp==1
 radfield_R56=[];
-R56slippage = round(param.R56buncher/param.lambda0)*2/param.zsep;
+R56slippage = round(param.R56buncher/param.lambda0*2/param.zsep);
 radfield_R56(1,1:R56slippage-1)=0;    
 radfield_R56(1,R56slippage:size(radfield,2)) = radfield(end,1:(size(radfield,2)-R56slippage+1));
 
